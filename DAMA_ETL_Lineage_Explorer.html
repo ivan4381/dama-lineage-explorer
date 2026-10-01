@@ -182,12 +182,11 @@ button { cursor: pointer; }
 .icon-btn:disabled { opacity: .4; cursor: default; border-color: var(--line); }
 
 /* ---------- Stat strip ---------- */
-.stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-.stat { padding: 12px 16px; display: grid; gap: 2px; border-radius: var(--r-md); }
-.stat .label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
-.stat .value { font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.stat .sub { font-size: 12px; color: var(--faint); }
-.stat.warn .value { color: var(--warn); }
+.stats { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; padding: 8px 16px; border-radius: var(--r-md); }
+.stat { display: inline-flex; align-items: center; gap: 6px; cursor: default; white-space: nowrap; }
+.stat .value { font-family: var(--font-display); font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; }
+.stat .label { font-size: 12.5px; color: var(--muted); }
+.stat.warn .value, .stat.warn .label { color: var(--warn); }
 .kdot { width: 8px; height: 8px; border-radius: 3px; display: inline-block; flex: none; }
 
 /* ---------- Workspace ---------- */
@@ -197,7 +196,7 @@ button { cursor: pointer; }
   gap: 14px;
   align-items: start;
 }
-.pane { min-width: 0; display: flex; flex-direction: column; height: clamp(560px, calc(100vh - 190px), 1040px); overflow: hidden; }
+.pane { min-width: 0; display: flex; flex-direction: column; height: clamp(560px, calc(100vh - 150px), 1040px); overflow: hidden; }
 .pane-head { padding: 14px 16px 10px; display: grid; gap: 10px; border-bottom: 1px solid var(--line); }
 .pane-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; margin: 0; display: flex; align-items: center; gap: 8px; }
 .eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
@@ -239,7 +238,6 @@ button { cursor: pointer; }
 /* Entity-type chips: icon badge instead of plain pill.
    Unpressed = grayscale (clearly "off"); pressed = full kind colour (clearly "on"). */
 #kindChips .chip {
-  --kc: var(--faint);
   border-radius: 9px;
   padding: 3px 8px 3px 6px;
   gap: 5px;
@@ -267,9 +265,10 @@ button { cursor: pointer; }
 }
 .results-meta { padding: 8px 16px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
 .results { list-style: none; margin: 0; padding: 0 8px 10px; overflow-y: auto; flex: 1; min-height: 0; }
-/* Filters can eat the whole pane on short screens: keep ~6 results visible and let the pane itself scroll the rest. */
-.pane.explore { overflow-y: auto; }
-.pane.explore .results { min-height: 280px; }
+/* Filters fold away (like the Details tree) so the results list gets the height on short screens. */
+.filters summary { margin: 0; }
+.filters .filter-body { display: grid; gap: 10px; padding-top: 6px; }
+.filters #filterCount.on { color: var(--accent); font-weight: 700; }
 .result {
   width: 100%; display: flex; gap: 10px; align-items: center; text-align: left;
   border: 1px solid transparent; background: transparent;
@@ -452,20 +451,27 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 }
 @media (max-width: 1280px) { #detailsCollapse { display: none; } }
 
+/* Desktop: the app is exactly one screen tall. Header + stats keep their natural height and the
+   workspace takes the rest, so no pixel guesses that drift with zoom or header size.
+   Below the min-height the page scrolls instead of crushing the panes. */
+@media (min-width: 1281px) {
+  .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; padding-block: 14px; }
+  .app > .topbar, .app > .stats { flex: none; }
+  .workspace { flex: 1; min-height: 520px; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  .pane { height: auto; }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1280px) {
   .workspace { grid-template-columns: 310px minmax(0, 1fr); }
   .pane.details { grid-column: 1 / -1; height: auto; max-height: none; }
   .pane.details .detail { overflow: visible; }
-  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 820px) {
   .workspace { grid-template-columns: minmax(0, 1fr); }
   .pane { height: auto; }
   .pane.explore .results { max-height: 340px; }
-  .pane.center { height: 78vh; min-height: 480px; }
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .dataset strong { max-width: 150px; }
+  .pane.center { height: 78vh; min-height: 480px; }  .dataset strong { max-width: 150px; }
   .brand p { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -505,7 +511,7 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
     </button>
   </header>
 
-  <section class="stats" id="stats" aria-label="Dataset summary"></section>
+  <section class="stats glass" id="stats" aria-label="Dataset summary"></section>
 
   <main class="workspace">
     <!-- Explore -->
@@ -518,6 +524,9 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
           <input id="q" type="search" placeholder="Search DAG, task, script, table…" autocomplete="off" spellcheck="false">
           <kbd aria-hidden="true">/</kbd>
         </div>
+        <details class="dlist filters" id="filters" open>
+        <summary><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>Filters<span id="filterCount"></span></summary>
+        <div class="filter-body">
         <div class="filter-group">
           <div class="filter-row"><span class="eyebrow" title="Count = matching entities">Entity type</span><button class="linkish" id="kindsAll">Show all</button></div>
           <div class="chips" id="kindChips" role="group" aria-label="Entity type filter"></div>
@@ -530,6 +539,8 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
           <label class="eyebrow" for="dagScope">DAG scope</label>
           <select id="dagScope" class="select"></select>
         </div>
+        </div>
+        </details>
       </div>
       <div class="results-meta"><span id="resultCount" aria-live="polite"></span><span>↑ ↓ · Enter</span></div>
       <ul class="results" id="results" aria-label="Matching entities"></ul>
@@ -917,12 +928,14 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
       if (n.kind === 'table') { if (n.isSource) c.src++; if (n.isTarget) c.tgt++; }
     }
     const blanks = m.rows.filter((r) => r.blank).length;
+    // One compact bar: "[icon] 89 DAGs"; the detail line lives in the tooltip.
     const tile = (label, value, sub, cls = '', dot = '') =>
-      `<div class="stat glass ${cls}"><span class="label">${dot}${label}</span><span class="value">${value}</span><span class="sub">${sub}</span></div>`;
-    const kd = (k) => `<span class="kdot" style="background:var(--k-${k})"></span>`;
+      `<div class="stat ${cls}" title="${esc(sub)}">${dot}<span class="value">${value}</span><span class="label">${label}</span></div>`;
+    const kd = (k) => `<span class="legend-ic" style="color:var(--k-${k})">${ICONS[k]}</span>`;
     $('#stats').innerHTML =
       tile('DAGs', fmt(c.dag), plural(c.task, 'task', 'tasks'), '', kd('dag')) +
-      tile('Scripts', fmt(c.script), `${fmt(c.script)} python · ${plural(c.runner, 'bash runner', 'bash runners')}`, '', kd('script')) +
+      tile(c.script === 1 ? 'Python Script' : 'Python Scripts', fmt(c.script), 'Unique Python script files', '', kd('script')) +
+      tile(c.runner === 1 ? 'Bash Runner' : 'Bash Runners', fmt(c.runner), 'Unique bash runner (.sh) files', '', kd('runner')) +
       tile('Tables', fmt(c.table), `${fmt(c.src)} read · ${fmt(c.tgt)} written`, '', kd('table')) +
       tile('Technologies', fmt(m.techRows.size), [...m.techRows.keys()].slice(0, 3).join(', ') + (m.techRows.size > 3 ? '…' : '')) +
       tile('Lineage rows', fmt(m.rows.length), 'one source → one target each') +
@@ -930,7 +943,15 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
   }
 
   /* ================= Filters ================= */
+  // "Filters · N active" so a folded filter panel never hides that results are narrowed.
+  function renderFilterCount() {
+    const n = (state.kinds.size < FILTER_KINDS.length ? 1 : 0) + state.techs.size + (state.dagScope ? 1 : 0);
+    const el = $('#filterCount');
+    el.textContent = n ? `${n} active` : '';
+    el.classList.toggle('on', n > 0);
+  }
   function renderKindChips(counts) {
+    renderFilterCount();
     const allOn = state.kinds.size === FILTER_KINDS.length;
     // A zero-count chip can't add anything; keep it clickable only if it's an active pick (so it can be turned off).
     const dead = (k) => !counts[k] && (allOn || !state.kinds.has(k));
@@ -1554,6 +1575,11 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     $('#detailsExpand').hidden = !collapsed;
     if (!collapsed) applyZoom(); // canvas width changed; keep zoom/fit in sync
   }
+  // Explore filters: open by default, remember the viewer's choice
+  const FILTERS_KEY = 'dama-etl-lineage:filtersOpen';
+  if (store.get(FILTERS_KEY) === false) $('#filters').open = false;
+  $('#filters').addEventListener('toggle', () => store.set(FILTERS_KEY, $('#filters').open));
+
   // remember which Details lists are open so re-renders (new focus) keep them open
   $('#detail').addEventListener('toggle', (e) => {
     const t = e.target.dataset?.list; if (!t) return;
