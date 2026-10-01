@@ -235,12 +235,38 @@ button { cursor: pointer; }
 .chip[aria-pressed="true"] .n { color: var(--muted); }
 .chip:hover { color: var(--fg); }
 .chip .kdot { width: 9px; height: 9px; }
+/* Entity-type chips: icon badge instead of plain pill.
+   Unpressed = grayscale (clearly "off"); pressed = full kind colour (clearly "on"). */
+#kindChips .chip {
+  --kc: var(--faint);
+  border-radius: 9px;
+  padding: 3px 8px 3px 6px;
+  gap: 5px;
+  font-size: 11px;
+  background: var(--glass-lo);
+  border-color: var(--line-strong);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+#kindChips .chip svg { flex: none; width: 13px; height: 13px; }
+#kindChips .chip .n { color: inherit; opacity: .7; font-size: 10.5px; }
+#kindChips .chip:hover { color: var(--kc); border-color: color-mix(in srgb, var(--kc) 45%, var(--line-strong)); }
+#kindChips .chip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--kc) 22%, var(--glass-hi));
+  border-color: var(--kc);
+  color: var(--kc);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kc) 35%, transparent);
+}
 .select {
   width: 100%; padding: 8px 10px; border-radius: 10px;
   border: 1px solid var(--line-strong); background: var(--glass-hi);
 }
 .results-meta { padding: 8px 16px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
 .results { list-style: none; margin: 0; padding: 0 8px 10px; overflow-y: auto; flex: 1; min-height: 0; }
+/* Filters can eat the whole pane on short screens: keep ~6 results visible and let the pane itself scroll the rest. */
+.pane.explore { overflow-y: auto; }
+.pane.explore .results { min-height: 280px; }
 .result {
   width: 100%; display: flex; gap: 10px; align-items: center; text-align: left;
   border: 1px solid transparent; background: transparent;
@@ -290,7 +316,7 @@ button { cursor: pointer; }
 .canvas.dragging { cursor: grabbing; user-select: none; }
 .sizer { position: relative; }
 .stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-.stage svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.stage > svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .edge { fill: none; stroke: var(--edge); stroke-width: 1.5; transition: stroke .15s, opacity .15s; }
 .edge.on { stroke: var(--accent); stroke-width: 2.2; }
 .stage.hl .edge:not(.on) { opacity: .18; }
@@ -322,6 +348,8 @@ button { cursor: pointer; }
   padding: 8px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
 }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-ic { display: inline-flex; flex: none; }
+.legend-ic svg { width: 13px; height: 13px; }
 .canvas-foot .note { margin-left: auto; color: var(--warn); }
 
 /* Rows table */
@@ -351,6 +379,8 @@ td .cell-link:hover { color: var(--accent); text-decoration: underline; }
 td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 .tech { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 11.5px; font-weight: 600; color: var(--muted); }
 .tech i { width: 7px; height: 7px; border-radius: 50%; background: var(--tc, var(--faint)); display: inline-block; }
+.tech svg, .tech-ic svg { color: var(--tc, var(--faint)); flex: none; }
+.tech-ic { display: inline-flex; flex: none; }
 .pager { display: flex; align-items: center; gap: 8px; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
 .pager .btns { display: flex; gap: 6px; }
 
@@ -380,7 +410,7 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 .ref:hover { background: var(--glass-lo); border-color: var(--line); }
 .ref .kdot { background: var(--kc); }
 .ref .t { min-width: 0; overflow-wrap: anywhere; }
-.ref .s { margin-left: auto; font-size: 11px; color: var(--faint); white-space: nowrap; padding-left: 6px; }
+.ref .s { margin-left: auto; font-size: 11px; color: var(--faint); white-space: nowrap; padding-left: 6px; max-width: 42%; overflow: hidden; text-overflow: ellipsis; }
 .callout { border-radius: 12px; padding: 10px 12px; font-size: 12.5px; background: var(--warn-soft); color: var(--fg); border: 1px solid var(--line); }
 .callout strong { color: var(--warn); }
 
@@ -398,6 +428,14 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
   z-index: 60; padding: 10px 16px; border-radius: 14px; font-weight: 600; font-size: 13px; max-width: min(92vw, 560px);
 }
 .toast.err { border-color: var(--warn); color: var(--warn); }
+
+/* ---------- Details panel collapse (Ctrl+→ to toggle, maximizes the canvas) ---------- */
+.detail-head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.expand-rail { display: none; margin: 14px auto 0; }
+.workspace.details-collapsed { grid-template-columns: 330px minmax(0, 1fr) 44px; }
+.pane.details.collapsed { padding: 0; overflow: hidden; align-items: center; }
+.pane.details.collapsed .pane-head, .pane.details.collapsed .detail { display: none; }
+.pane.details.collapsed .expand-rail { display: flex; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1280px) {
@@ -535,7 +573,17 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 
     <!-- Details -->
     <aside class="pane details glass" aria-label="Entity details">
-      <div class="pane-head"><h2 class="pane-title">Details</h2></div>
+      <button class="icon-btn expand-rail" id="detailsExpand" title="Expand details panel (Ctrl+→)" aria-label="Expand details panel" hidden>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg>
+      </button>
+      <div class="pane-head">
+        <div class="detail-head-row">
+          <h2 class="pane-title">Details</h2>
+          <button class="icon-btn" id="detailsCollapse" title="Collapse panel (Ctrl+→)" aria-label="Collapse details panel">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+          </button>
+        </div>
+      </div>
       <div class="detail" id="detail"></div>
     </aside>
   </main>
@@ -585,10 +633,10 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
   const KIND_ORDER = { dag: 0, task: 1, runner: 2, script: 3, table: 4 };
 
   const ICONS = {
-    dag: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.3 11 16.7 6M7.3 13l9.4 5"/></svg>',
+    dag: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12C12 7 15 4 19 5 18 9 15 12 12 12Z"/><path d="M12 12C12 7 15 4 19 5 18 9 15 12 12 12Z" transform="rotate(90 12 12)"/><path d="M12 12C12 7 15 4 19 5 18 9 15 12 12 12Z" transform="rotate(180 12 12)"/><path d="M12 12C12 7 15 4 19 5 18 9 15 12 12 12Z" transform="rotate(270 12 12)"/><circle cx="12" cy="12" r="2.1"/></svg>',
     task: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
     runner: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 10 3 2.5L7 15M12.5 15H17"/></svg>',
-    script: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14"/></svg>',
+    script: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.26.36.36.35.46.32.59.28.73.21.88.14 1.05.05 1.23-.06 1.22-.16 1.04-.24.87-.32.71-.36.57-.4.44-.42.33-.42.24-.4.16-.36.1-.32.05-.24.01h-.16l-.06-.01h-8.16v.83h6.78l.01 2.75.02.37-.05.34-.11.31-.17.28-.25.26-.31.23-.38.2-.44.18-.51.15-.58.12-.64.1-.71.06-.77.04-.84.02-1.27-.05-1.12-.18-.9-.2-.73-.26-.59-.3-.45-.32-.34-.34-.25-.34-.16-.33-.1-.3-.04-.26-.02-.2.01-.13v-5.34l.05-.63.13-.55.21-.46.26-.38.3-.31.33-.25.35-.19.35-.14.33-.1.3-.07.26-.04.21-.02h5.44l.69-.05.59-.14.5-.22.41-.27.33-.32.27-.35.2-.36.15-.37.1-.35.07-.32.04-.27.02-.21V6.07zm-6.47 14.25l-.33.22-.23.34-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.34-.33-.22-.41-.09z"/></svg>',
     table: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
   };
   const glyph = (kind) => `<span class="glyph ${KIND_META[kind].cls}" aria-hidden="true">${ICONS[kind]}</span>`;
@@ -599,7 +647,21 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     'excel': '#1f8a4f', 'csv': '#7d8f3a', 'sap bw': '#3b6fc0', 'website': '#9657b8', 'gcs': '#e07a2e', 'postgresql': '#336791', 'oracle': '#c74634',
   };
   const techColor = (t) => TECH_COLORS[String(t).toLowerCase()] || 'var(--faint)';
-  const techBadge = (t) => t ? `<span class="tech" style="--tc:${techColor(t)}"><i></i>${esc(t)}</span>` : '';
+  /* Monochrome logo marks (stylised, not official brand art) for techs that have a well-known logo.
+     Others fall back to the plain colour dot. */
+  const TECH_ICONS = {
+    'bigquery': '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m17 17 4 4"/><path d="M8 13v2" stroke-opacity=".55"/><path d="M11 8v7"/><path d="M14 11v4" stroke-opacity=".55"/></svg>',
+    'azure sql': '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h4.2L8.8 16.3l-6.4 4.4L9.5 3z"/><path d="M14.6 3.9 20 19.6c.2.5-.3 1-.8.8l-11-3.8 9-5.4 -2.6-7.3z"/></svg>',
+    'sql server': '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="10.5" width="18" height="5" rx="1.5"/><rect x="3" y="17" width="18" height="5" rx="1.5"/><path d="M6.5 6.5h.01M6.5 13h.01M6.5 19.5h.01"/></svg>',
+    'hive': '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 20.5 7v10L12 22 3.5 17V7z"/><path d="M12 12 20.5 7M12 12 3.5 7M12 12v10"/></svg>',
+    'excel': '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+    'website': '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.5 4 5.8 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.8-4-9s1.5-6.5 4-9z"/></svg>',
+    'mysql': '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 15c3-6 9-10 16-9-1 1.5-1 3 .5 4-5-1-9 1-11 6-1 2-3 2.5-5.5-1z"/><circle cx="17" cy="8" r="1"/></svg>',
+    'csv': '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13c.6 1 .6 2 0 3M13 13c.6 1 .6 2 0 3M17 13c.6 1 .6 2 0 3"/></svg>',
+    'gcs': '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 20.5 7v10L12 22 3.5 17V7z"/><rect x="7.5" y="8" width="9" height="3.6" rx="1"/><rect x="7.5" y="12.4" width="9" height="3.6" rx="1"/><path d="M9.5 9.8h.01M9.5 14.2h.01"/></svg>',
+  };
+  const techIcon = (t) => TECH_ICONS[String(t).toLowerCase()] || '';
+  const techBadge = (t) => t ? `<span class="tech" style="--tc:${techColor(t)}">${techIcon(t) || '<i></i>'}${esc(t)}</span>` : '';
 
   /* ================= Parsing ================= */
   // Header aliases, compared after lower-casing and stripping non-alphanumerics.
@@ -837,13 +899,13 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
   /* ================= Filters ================= */
   function renderKindChips(counts) {
     $('#kindChips').innerHTML = FILTER_KINDS.map(([k, label, cls]) =>
-      `<button class="chip ${cls}" data-kind="${k}" aria-pressed="${state.kinds.has(k)}"><span class="kdot" style="background:var(--kc)"></span>${label}<span class="n">${fmt(counts[k] || 0)}</span></button>`
+      `<button class="chip ${cls}" data-kind="${k}" aria-pressed="${state.kinds.has(k)}">${ICONS[k === 'source' || k === 'target' ? 'table' : k]}${label}<span class="n">${fmt(counts[k] || 0)}</span></button>`
     ).join('');
   }
   function renderTechChips() {
     const entries = [...state.model.techRows.entries()].sort((a, b) => b[1] - a[1]);
     $('#techChips').innerHTML = entries.map(([t, n]) =>
-      `<button class="chip" data-tech="${esc(t)}" aria-pressed="${state.techs.has(t)}"><span class="kdot" style="background:${techColor(t)};border-radius:50%"></span>${esc(t)}<span class="n">${fmt(n)}</span></button>`
+      `<button class="chip" data-tech="${esc(t)}" aria-pressed="${state.techs.has(t)}" style="--tc:${techColor(t)}">${techIcon(t) ? `<span class="tech-ic">${techIcon(t)}</span>` : `<span class="kdot" style="background:${techColor(t)};border-radius:50%"></span>`}${esc(t)}<span class="n">${fmt(n)}</span></button>`
     ).join('');
     $('#techAll').textContent = state.techs.size ? 'Clear' : 'Any';
   }
@@ -1170,7 +1232,7 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
 
   function legendHtml(note, lin) {
     const items = ['dag', 'task', 'runner', 'script', 'table']
-      .map((k) => `<span class="legend-item"><span class="kdot" style="background:var(--k-${k})"></span>${KIND_META[k].label}</span>`).join('');
+      .map((k) => `<span class="legend-item"><span class="legend-ic" style="color:var(--k-${k})">${ICONS[k]}</span>${KIND_META[k].label}</span>`).join('');
     const size = lin ? `<span>${plural(lin.layer.size, 'node', 'nodes')} · ${plural(lin.edges.length, 'edge', 'edges')}</span>` : '';
     return `${items}<span aria-hidden="true">·</span>${size}${note ? `<span class="note">${esc(note)}</span>` : ''}`;
   }
@@ -1434,6 +1496,18 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     state.depth = Number(b.dataset.d);
     document.querySelectorAll('#depthSeg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     renderGraph(true);
+  });
+  function toggleDetails(force) {
+    const pane = document.querySelector('.pane.details');
+    const collapsed = pane.classList.toggle('collapsed', force);
+    document.querySelector('.workspace').classList.toggle('details-collapsed', collapsed);
+    $('#detailsExpand').hidden = !collapsed;
+    if (!collapsed) applyZoom(); // canvas width changed; keep zoom/fit in sync
+  }
+  $('#detailsCollapse').addEventListener('click', () => toggleDetails());
+  $('#detailsExpand').addEventListener('click', () => toggleDetails());
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); toggleDetails(); }
   });
   $('#backBtn').addEventListener('click', () => {
     const prev = state.history.pop();
