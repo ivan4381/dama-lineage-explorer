@@ -201,6 +201,7 @@ button { cursor: pointer; }
 .pane-head { padding: 14px 16px 10px; display: grid; gap: 10px; border-bottom: 1px solid var(--line); }
 .pane-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; margin: 0; display: flex; align-items: center; gap: 8px; }
 .eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.eyebrow-hint { letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--faint); }
 
 /* Explore pane */
 .search { position: relative; }
@@ -258,6 +259,8 @@ button { cursor: pointer; }
   color: var(--kc);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kc) 35%, transparent);
 }
+.chip:disabled, #kindChips .chip:disabled { opacity: .4; cursor: default; filter: grayscale(1); }
+.chip-more { border-style: dashed; }
 .select {
   width: 100%; padding: 8px 10px; border-radius: 10px;
   border: 1px solid var(--line-strong); background: var(--glass-hi);
@@ -399,8 +402,17 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 .fact dt { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
 .fact dd { margin: 1px 0 0; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .fact.wide { grid-column: 1 / -1; }
-.dlist h4 { margin: 0 0 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
-.dlist h4 span { font-variant-numeric: tabular-nums; color: var(--faint); }
+.dlist summary {
+  margin: 0; padding: 4px 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; list-style: none;
+}
+.dlist summary::marker, .dlist summary::-webkit-details-marker { display: none; content: ''; }
+.dlist summary .chev { flex: none; color: var(--faint); transition: transform .15s; }
+.dlist[open] summary .chev { transform: rotate(90deg); }
+.dlist summary span { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--faint); }
+.dlist[open] summary { margin-bottom: 4px; }
+.dlist summary:hover { color: var(--fg); }
+.dlist summary:hover .chev { color: var(--fg); }
 .dlist ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .ref {
   width: 100%; display: flex; align-items: center; gap: 8px; text-align: left;
@@ -431,10 +443,14 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 /* ---------- Details panel collapse (Ctrl+→ to toggle, maximizes the canvas) ---------- */
 .detail-head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .expand-rail { display: none; margin: 14px auto 0; }
-.workspace.details-collapsed { grid-template-columns: 330px minmax(0, 1fr) 44px; }
-.pane.details.collapsed { padding: 0; overflow: hidden; align-items: center; }
-.pane.details.collapsed .pane-head, .pane.details.collapsed .detail { display: none; }
-.pane.details.collapsed .expand-rail { display: flex; }
+/* Only the 3-column desktop layout can collapse; below it Details stacks full-width. */
+@media (min-width: 1281px) {
+  .workspace.details-collapsed { grid-template-columns: 330px minmax(0, 1fr) 44px; }
+  .pane.details.collapsed { padding: 0; overflow: hidden; align-items: center; }
+  .pane.details.collapsed .pane-head, .pane.details.collapsed .detail { display: none; }
+  .pane.details.collapsed .expand-rail { display: flex; }
+}
+@media (max-width: 1280px) { #detailsCollapse { display: none; } }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1280px) {
@@ -503,11 +519,11 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
           <kbd aria-hidden="true">/</kbd>
         </div>
         <div class="filter-group">
-          <div class="filter-row"><span class="eyebrow">Entity type</span><button class="linkish" id="kindsAll">Show all</button></div>
+          <div class="filter-row"><span class="eyebrow" title="Count = matching entities">Entity type</span><button class="linkish" id="kindsAll">Show all</button></div>
           <div class="chips" id="kindChips" role="group" aria-label="Entity type filter"></div>
         </div>
         <div class="filter-group">
-          <div class="filter-row"><span class="eyebrow">Technology</span><button class="linkish" id="techAll">Any</button></div>
+          <div class="filter-row"><span class="eyebrow" title="Count = lineage rows using this technology, not entities">Technology <span class="eyebrow-hint">(rows)</span></span><button class="linkish" id="techAll">Any</button></div>
           <div class="chips" id="techChips" role="group" aria-label="Technology filter"></div>
         </div>
         <div class="filter-group">
@@ -818,7 +834,7 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
   const state = {
     model: null, name: '', origin: 'built-in',
     query: '', kinds: new Set(FILTER_KINDS.map((k) => k[0])), techs: new Set(), dagScope: '',
-    focus: null, history: [], depth: 1, tab: 'graph',
+    focus: null, history: [], depth: 1, tab: 'graph', openLists: new Set(), techMore: false,
     rowsFocus: null, rowsQuery: '', onlyBlank: false, page: 0,
     zoom: 1, activeResult: -1, resultIds: [],
   };
@@ -834,9 +850,27 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     $('#datasetRows').textContent = '· ' + plural(rows.length, 'row', 'rows');
     $('#resetData').hidden = origin === 'built-in' || !EMBEDDED;
     renderStats(); renderTechChips(); renderDagScope();
-    focus(pickDefaultFocus(), false);
+    const initId = initialFocusId();
+    focus((initId && state.model.nodes.has(initId)) ? initId : pickDefaultFocus(), false);
     renderResults();
   }
+
+  // Shareable links: the focused entity lives in the URL hash (#focus=<id>), consulted
+  // once on first load only — switching/reloading a dataset shouldn't jump to a stale id.
+  let hashConsumed = false;
+  function initialFocusId() {
+    if (hashConsumed) return null;
+    hashConsumed = true;
+    const m = /^#focus=(.+)$/.exec(location.hash);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function syncHash(id, replace) {
+    try { history[replace ? 'replaceState' : 'pushState']({ focus: id }, '', '#focus=' + encodeURIComponent(id)); } catch { /* ignore */ }
+  }
+  window.addEventListener('popstate', (e) => {
+    const id = e.state?.focus;
+    if (id && state.model?.nodes.has(id)) focus(id, false);
+  });
 
   // Start on the busiest table so the first view already shows real lineage.
   function pickDefaultFocus() {
@@ -897,15 +931,24 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
 
   /* ================= Filters ================= */
   function renderKindChips(counts) {
+    const allOn = state.kinds.size === FILTER_KINDS.length;
+    // A zero-count chip can't add anything; keep it clickable only if it's an active pick (so it can be turned off).
+    const dead = (k) => !counts[k] && (allOn || !state.kinds.has(k));
     $('#kindChips').innerHTML = FILTER_KINDS.map(([k, label, cls]) =>
-      `<button class="chip ${cls}" data-kind="${k}" aria-pressed="${state.kinds.has(k)}">${ICONS[k === 'source' || k === 'target' ? 'table' : k]}${label}<span class="n">${fmt(counts[k] || 0)}</span></button>`
+      `<button class="chip ${cls}" data-kind="${k}" aria-pressed="${state.kinds.has(k)}"${dead(k) ? ' disabled' : ''}>${ICONS[k === 'source' || k === 'target' ? 'table' : k]}${label}<span class="n">${fmt(counts[k] || 0)}</span></button>`
     ).join('');
   }
   function renderTechChips() {
-    const entries = [...state.model.techRows.entries()].sort((a, b) => b[1] - a[1]);
+    const TOP = 5;
+    const all = [...state.model.techRows.entries()].sort((a, b) => b[1] - a[1]);
+    // Collapsed: top 5 plus any selected tech, so an active filter is never hidden.
+    const entries = state.techMore ? all : all.filter(([t], i) => i < TOP || state.techs.has(t));
+    const hiddenN = all.length - entries.length;
+    const more = all.length > TOP
+      ? `<button class="chip chip-more" data-tech-more>${state.techMore ? 'Show less' : `+${hiddenN} more`}</button>` : '';
     $('#techChips').innerHTML = entries.map(([t, n]) =>
-      `<button class="chip" data-tech="${esc(t)}" aria-pressed="${state.techs.has(t)}" style="--tc:${techColor(t)}">${techIcon(t) ? `<span class="tech-ic">${techIcon(t)}</span>` : `<span class="kdot" style="background:${techColor(t)};border-radius:50%"></span>`}${esc(t)}<span class="n">${fmt(n)}</span></button>`
-    ).join('');
+      `<button class="chip" data-tech="${esc(t)}" aria-pressed="${state.techs.has(t)}" style="--tc:${techColor(t)}" title="${esc(t)} — ${fmt(n)} lineage ${n === 1 ? 'row' : 'rows'}">${techIcon(t) ? `<span class="tech-ic">${techIcon(t)}</span>` : `<span class="kdot" style="background:${techColor(t)};border-radius:50%"></span>`}${esc(t)}<span class="n">${fmt(n)}</span></button>`
+    ).join('') + more;
     $('#techAll').textContent = state.techs.size ? 'Clear' : 'Any';
   }
   function renderDagScope() {
@@ -996,6 +1039,7 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     if (pushHistory && state.focus && state.focus !== id) state.history.push(state.focus);
     state.focus = id;
     $('#backBtn').disabled = !state.history.length;
+    syncHash(id, !pushHistory); // real browser-history entry on normal navigation; silent update on Back/restore
     renderAll(true);
   }
   function renderAll(scrollToFocus) {
@@ -1286,7 +1330,7 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
       return `<li${i >= LIMIT ? ' hidden data-more' : ''}><button class="ref ${KIND_META[n.kind].cls}" data-id="${esc(n.id)}" title="${esc(tip)}"><span class="kdot"></span><span class="t${n.kind === 'table' || n.kind === 'script' ? ' mono' : ''}">${esc(n.name)}</span></button></li>`;
     };
     const more = arr.length > LIMIT ? `<li><button class="linkish" data-showmore>Show all ${fmt(arr.length)}</button></li>` : '';
-    return `<section class="dlist"><h4>${esc(title)} <span>${fmt(arr.length)}</span></h4><ul>${arr.map(li).join('')}${more}</ul></section>`;
+    return `<details class="dlist" data-list="${esc(title)}"${state.openLists.has(title) ? ' open' : ''}><summary><svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>${esc(title)}<span>${fmt(arr.length)}</span></summary><ul>${arr.map(li).join('')}${more}</ul></details>`;
   }
 
   function renderDetail() {
@@ -1319,8 +1363,7 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
         lists = refList('Reads from', n.srcTables, tsub) + refList('Writes to', n.tgtTables, tsub) + refList('DAGs', dagIds) + refList('Tasks', n.tasks, (x) => x.dag);
         break;
       case 'dag':
-        facts = fact('Tasks', fmt(n.tasks.size)) + fact('Scripts', fmt(n.scripts.size)) +
-          fact('Source tables', fmt(n.srcTables.size)) + fact('Target tables', fmt(n.tgtTables.size));
+        // Counts already shown as the collapsible list headers below — no separate fact cards needed.
         lists = refList('Tasks', n.tasks) + refList('Scripts', n.scripts) + refList('Target tables', n.tgtTables, tsub) + refList('Source tables', n.srcTables, tsub) + refList('Bash runners', n.runners);
         break;
       case 'task':
@@ -1348,7 +1391,7 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
           <button class="btn" id="viewRowsBtn">View ${plural(n.rows.size, 'row', 'rows')}</button>
         </div>
       </div>
-      <dl class="facts">${facts}</dl>
+      ${facts ? `<dl class="facts">${facts}</dl>` : ''}
       ${warn}
       ${lists}`;
   }
@@ -1476,11 +1519,15 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
   $('#kindChips').addEventListener('click', (e) => {
     const c = e.target.closest('[data-kind]'); if (!c) return;
     const k = c.dataset.kind;
-    state.kinds.has(k) ? state.kinds.delete(k) : state.kinds.add(k);
+    // From "all on", a click means "only this kind"; after that, clicks add/remove kinds.
+    if (state.kinds.size === FILTER_KINDS.length) state.kinds = new Set([k]);
+    else state.kinds.has(k) ? state.kinds.delete(k) : state.kinds.add(k);
+    if (!state.kinds.size) FILTER_KINDS.forEach(([x]) => state.kinds.add(x)); // never leave an empty filter
     renderResults();
   });
   $('#kindsAll').addEventListener('click', () => { FILTER_KINDS.forEach(([k]) => state.kinds.add(k)); renderResults(); });
   $('#techChips').addEventListener('click', (e) => {
+    if (e.target.closest('[data-tech-more]')) { state.techMore = !state.techMore; renderTechChips(); return; }
     const c = e.target.closest('[data-tech]'); if (!c) return;
     const t = c.dataset.tech;
     state.techs.has(t) ? state.techs.delete(t) : state.techs.add(t);
@@ -1507,10 +1554,19 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     $('#detailsExpand').hidden = !collapsed;
     if (!collapsed) applyZoom(); // canvas width changed; keep zoom/fit in sync
   }
+  // remember which Details lists are open so re-renders (new focus) keep them open
+  $('#detail').addEventListener('toggle', (e) => {
+    const t = e.target.dataset?.list; if (!t) return;
+    e.target.open ? state.openLists.add(t) : state.openLists.delete(t);
+  }, true);
   $('#detailsCollapse').addEventListener('click', () => toggleDetails());
   $('#detailsExpand').addEventListener('click', () => toggleDetails());
   document.addEventListener('keydown', (e) => {
-    if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); toggleDetails(); }
+    if (!e.ctrlKey || e.key !== 'ArrowRight') return;
+    // leave Ctrl+→ (word jump) alone while typing; collapse only exists in the 3-column layout
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+    if (!matchMedia('(min-width: 1281px)').matches) return;
+    e.preventDefault(); toggleDetails();
   });
   $('#backBtn').addEventListener('click', () => {
     const prev = state.history.pop();
