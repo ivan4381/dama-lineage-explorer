@@ -396,6 +396,7 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 }
 .d-name.mono { font-family: var(--font-mono); font-weight: 500; }
 .d-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.list-actions { display: flex; gap: 14px; margin: -8px 0 -4px; }
 .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
 .fact { background: var(--glass-lo); border: 1px solid var(--line); border-radius: 10px; padding: 6px 9px; min-width: 0; }
 .fact dt { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
@@ -600,13 +601,13 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
     <!-- Details -->
     <aside class="pane details glass" aria-label="Entity details">
       <button class="icon-btn expand-rail" id="detailsExpand" title="Expand details panel (Ctrl+→)" aria-label="Expand details panel" hidden>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
       </button>
       <div class="pane-head">
         <div class="detail-head-row">
           <h2 class="pane-title">Details</h2>
           <button class="icon-btn" id="detailsCollapse" title="Collapse panel (Ctrl+→)" aria-label="Collapse details panel">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg>
           </button>
         </div>
       </div>
@@ -1414,6 +1415,7 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
       </div>
       ${facts ? `<dl class="facts">${facts}</dl>` : ''}
       ${warn}
+      ${lists ? `<div class="list-actions"><button class="linkish" id="expandAllLists">Expand all</button><button class="linkish" id="collapseAllLists">Collapse all</button></div>` : ''}
       ${lists}`;
   }
 
@@ -1585,6 +1587,12 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     const t = e.target.dataset?.list; if (!t) return;
     e.target.open ? state.openLists.add(t) : state.openLists.delete(t);
   }, true);
+  $('#detail').addEventListener('click', (e) => {
+    const open = e.target.closest('#expandAllLists') ? true : e.target.closest('#collapseAllLists') ? false : null;
+    if (open === null) return;
+    // setting .open fires 'toggle', which the listener above uses to update state.openLists
+    document.querySelectorAll('#detail details.dlist').forEach((d) => { d.open = open; });
+  });
   $('#detailsCollapse').addEventListener('click', () => toggleDetails());
   $('#detailsExpand').addEventListener('click', () => toggleDetails());
   document.addEventListener('keydown', (e) => {
