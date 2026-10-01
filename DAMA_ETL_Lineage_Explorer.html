@@ -277,7 +277,7 @@ button { cursor: pointer; }
 .result .txt { min-width: 0; display: grid; }
 .result .name { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .result .meta { font-size: 11.5px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.result mark { background: var(--accent-soft); color: inherit; border-radius: 3px; padding: 0 1px; }
+.result mark { background: var(--accent); color: var(--accent-ink); font-weight: 700; border-radius: 3px; padding: 0 2px; }
 .glyph {
   width: 28px; height: 28px; flex: none; border-radius: 9px;
   display: grid; place-items: center;
@@ -389,15 +389,15 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 .d-kind { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--kc); letter-spacing: .04em; text-transform: uppercase; }
 .d-kind .glyph { width: 24px; height: 24px; border-radius: 7px; }
 .d-name {
-  margin: 6px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 18px; line-height: 1.25;
+  margin: 6px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 13px; line-height: 1.25;
   overflow-wrap: anywhere; text-wrap: balance;
 }
-.d-name.mono { font-family: var(--font-mono); font-size: 14.5px; font-weight: 500; }
+.d-name.mono { font-family: var(--font-mono); font-weight: 500; }
 .d-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.fact { background: var(--glass-lo); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; min-width: 0; }
-.fact dt { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-.fact dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.fact { background: var(--glass-lo); border: 1px solid var(--line); border-radius: 10px; padding: 6px 9px; min-width: 0; }
+.fact dt { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.fact dd { margin: 1px 0 0; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .fact.wide { grid-column: 1 / -1; }
 .dlist h4 { margin: 0 0 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
 .dlist h4 span { font-variant-numeric: tabular-nums; color: var(--faint); }
@@ -410,7 +410,6 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 .ref:hover { background: var(--glass-lo); border-color: var(--line); }
 .ref .kdot { background: var(--kc); }
 .ref .t { min-width: 0; overflow-wrap: anywhere; }
-.ref .s { margin-left: auto; font-size: 11px; color: var(--faint); white-space: nowrap; padding-left: 6px; max-width: 42%; overflow: hidden; text-overflow: ellipsis; }
 .callout { border-radius: 12px; padding: 10px 12px; font-size: 12.5px; background: var(--warn-soft); color: var(--fg); border: 1px solid var(--line); }
 .callout strong { color: var(--warn); }
 
@@ -889,7 +888,7 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     const kd = (k) => `<span class="kdot" style="background:var(--k-${k})"></span>`;
     $('#stats').innerHTML =
       tile('DAGs', fmt(c.dag), plural(c.task, 'task', 'tasks'), '', kd('dag')) +
-      tile('Scripts', fmt(c.script), plural(c.runner, 'bash runner', 'bash runners'), '', kd('script')) +
+      tile('Scripts', fmt(c.script), `${fmt(c.script)} python · ${plural(c.runner, 'bash runner', 'bash runners')}`, '', kd('script')) +
       tile('Tables', fmt(c.table), `${fmt(c.src)} read · ${fmt(c.tgt)} written`, '', kd('table')) +
       tile('Technologies', fmt(m.techRows.size), [...m.techRows.keys()].slice(0, 3).join(', ') + (m.techRows.size > 3 ? '…' : '')) +
       tile('Lineage rows', fmt(m.rows.length), 'one source → one target each') +
@@ -1281,7 +1280,11 @@ const EMBEDDED_NAME = "Lineage_DAG_Master.csv";
     const arr = [...ids].map((id) => m.nodes.get(id)).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
     if (!arr.length) return '';
     const LIMIT = 12;
-    const li = (n, i) => `<li${i >= LIMIT ? ' hidden data-more' : ''}><button class="ref ${KIND_META[n.kind].cls}" data-id="${esc(n.id)}"><span class="kdot"></span><span class="t${n.kind === 'table' || n.kind === 'script' ? ' mono' : ''}">${esc(n.name)}</span><span class="s">${esc(sub ? sub(n) : '')}</span></button></li>`;
+    const li = (n, i) => {
+      const subTxt = sub ? sub(n) : '';
+      const tip = subTxt ? `${n.name} · ${subTxt}` : n.name;
+      return `<li${i >= LIMIT ? ' hidden data-more' : ''}><button class="ref ${KIND_META[n.kind].cls}" data-id="${esc(n.id)}" title="${esc(tip)}"><span class="kdot"></span><span class="t${n.kind === 'table' || n.kind === 'script' ? ' mono' : ''}">${esc(n.name)}</span></button></li>`;
+    };
     const more = arr.length > LIMIT ? `<li><button class="linkish" data-showmore>Show all ${fmt(arr.length)}</button></li>` : '';
     return `<section class="dlist"><h4>${esc(title)} <span>${fmt(arr.length)}</span></h4><ul>${arr.map(li).join('')}${more}</ul></section>`;
   }
