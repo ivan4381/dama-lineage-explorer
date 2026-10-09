@@ -510,17 +510,39 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
 }
 
 /* ===== BI Lineage ===== */
-.bi-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 16px; border-radius: var(--r-md); font-size: 12.5px; color: var(--muted); }
+/* Load menu: one header button, a popover menu below it (ETL lineage / BI lineage) */
+.load-btn { anchor-name: --load-btn; }
+.load-menu { margin: 0; padding: 6px; min-width: 270px; position-anchor: --load-btn; inset: auto;
+  top: calc(anchor(bottom) + 8px); right: anchor(right); background: var(--bg-solid); }
+.load-menu:popover-open { display: grid; gap: 2px; }
+.load-menu button { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; text-align: left; padding: 9px 12px;
+  border: 0; border-radius: 10px; background: transparent; color: var(--fg); font: inherit; font-size: 13px; cursor: pointer; }
+.load-menu .menu-ico { grid-row: span 2; width: 22px; height: 22px; }
+.load-menu button:hover, .load-menu button:focus-visible { background: var(--glass-lo); }
+.load-menu small { color: var(--muted); font-size: 11.5px; }
+/* BI snapshot: a status button in the header opens the details as a popover below it (anchor positioning;
+   browsers without it show the popover centred) */
+.bi-status { anchor-name: --bi-status; gap: 8px; font-size: 12.5px; }
+.bi-status .dot, .bi-banner .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--k-dag); flex: none; }
+.bi-status .warn, .bi-banner .warn { color: var(--warn); }
+.bi-banner { margin: 0; padding: 14px 16px; width: min(560px, calc(100vw - 32px)); max-height: 70vh; overflow: auto;
+  position-anchor: --bi-status; inset: auto; top: calc(anchor(bottom) + 8px); right: anchor(right);
+  background: var(--bg-solid); color: var(--muted); font-size: 12.5px; }
+.bi-banner:popover-open { display: flex; flex-direction: column; gap: 6px; }
 .bi-banner strong { color: var(--fg); font-weight: 600; }
-.bi-banner .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--k-dag); flex: none; }
-.bi-banner .bi-actions { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
-.bi-banner .dlist { flex-basis: 100%; }
-.bi-banner .dlist:not([open]) { flex-basis: auto; }
-.bi-banner .warn { color: var(--warn); }
+.bi-banner .bi-actions { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 0 -10px; }
+/* Power BI reports in Power BI yellow: a dark gold on light backgrounds (4.5:1 on --bg), the brand #F2C811 in dark */
+:root { --k-report: #8a6400; --k-ext: #718790; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --k-report: #f2c811; --k-ext: #8fa3aa; } }
+:root[data-theme="dark"] { --k-report: #f2c811; --k-ext: #8fa3aa; }
+:root { --k-fabric: var(--k-report); --k-pbirs: var(--k-report); }
+.k-report { --kc: var(--k-report); }
+.k-ext { --kc: var(--k-ext); }
+.node.k-ext { border-style: dashed; }
+.edge.alias { stroke-dasharray: 5 4; }
 .bi-list li b { color: var(--fg); font-size: 12.5px; }
 .bi-list .bi-sub { display: block; font-size: 11.5px; color: var(--muted); }
 .bi-embed { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; cursor: pointer; }
-@media (min-width: 1281px) { .app > .bi-banner { flex: none; } }
 .bi-links { padding-bottom: 12px; }
 .bi-links table { min-width: 720px; }
 .bi-h { margin: 16px 12px 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; display: flex; gap: 8px; }
@@ -554,21 +576,26 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
       <label class="bi-embed" id="biEmbedWrap" hidden title="Also build the loaded BI snapshot and alias file into the saved HTML, values as loaded (including personal paths, so share it only with people who may see them). The file name then carries the harvest date."><input type="checkbox" id="biEmbed"> Include BI snapshot</label>
     </div>
     <input type="file" id="fileInput" accept=".csv,.txt,.xlsx,.xls" hidden>
-    <button class="btn primary" id="uploadBtn">
+    <!-- one Load button; its menu picks what to load -->
+    <button class="btn primary load-btn" id="loadBtn" popovertarget="loadMenu" aria-haspopup="menu">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>
-      Load CSV / Excel
+      Load
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
-    <!-- ===== BI Lineage ===== -->
+    <div class="load-menu glass" id="loadMenu" popover role="menu" aria-label="Load">
+      <button type="button" role="menuitem" id="uploadBtn"><img class="menu-ico" src="data:image/png;base64,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" width="22" height="22" alt=""><b>ETL Lineage</b><small>Airflow DAG lineage · CSV or Excel</small></button>
+      <!-- ===== BI Lineage ===== -->
+      <button type="button" role="menuitem" id="biBtn" title="Load a Power BI lineage CSV (bi_lineage_*.csv) to see which reports use each target table. Kept in this tab only."><img class="menu-ico" src="data:image/png;base64,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" width="22" height="22" alt=""><b>BI Lineage</b><small>bi_lineage_*.csv from SEMADEX Batch Export</small></button>
+    </div>
     <input type="file" id="biInput" accept=".csv" hidden>
     <input type="file" id="biAliasInput" accept=".csv" hidden>
-    <button class="btn" id="biBtn" title="Load a Power BI lineage CSV (bi_lineage_*.csv) to see which reports use each target table. Kept in this tab only.">Load BI Lineage CSV</button>
+    <button class="btn ghost bi-status" id="biStatus" popovertarget="biBanner" hidden title="BI snapshot: date, file, skipped rows, alias file, unload"><span class="dot" aria-hidden="true"></span><span id="biStatusText"></span></button>
+    <div class="bi-banner glass" id="biBanner" popover aria-label="BI lineage snapshot"></div>
     <!-- ===== /BI Lineage ===== -->
     <button class="icon-btn" id="themeBtn" aria-label="Switch light or dark theme" title="Switch theme">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     </button>
   </header>
-
-  <section class="bi-banner glass" id="biBanner" aria-label="BI lineage snapshot" hidden></section>
 
   <section class="stats glass" id="stats" aria-label="Dataset summary"></section>
 
@@ -629,6 +656,11 @@ td .blank { color: var(--warn); font-style: italic; font-size: 11.5px; }
               <button data-d="2" aria-pressed="false">2 hops</button>
               <button data-d="3" aria-pressed="false">3 hops</button>
               <button data-d="99" aria-pressed="false">Full chain</button>
+            </div>
+            <!-- ===== BI Lineage ===== -->
+            <div class="seg" id="biViewSeg" role="group" aria-label="Canvas view" hidden>
+              <button data-v="full" aria-pressed="true" title="Every DAG, task, bash runner, script and table">Full</button>
+              <button data-v="compact" aria-pressed="false" title="Only DAGs, the tables they write, and the Fabric / PBIRS reports that read them; external sources are grouped per DAG">DAG · Table · Report</button>
             </div>
           </div>
           <div class="toolbar" style="margin-left:auto">
@@ -1079,7 +1111,8 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
   }
 
   const kindKeyMatch = (n, key) => key === 'source' ? (n.kind === 'table' && n.isSource)
-    : key === 'target' ? (n.kind === 'table' && n.isTarget) : n.kind === key;
+    : key === 'target' ? (n.kind === 'table' && n.isTarget)
+    : key === 'report' ? (n.kind === 'fabric' || n.kind === 'pbirs') : n.kind === key; // report: BI Lineage
 
   function passesContext(n, toks) {
     if (state.dagScope && !n.dags.has(state.dagScope)) return false;
@@ -1151,7 +1184,7 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
       case 'script': return `${dagsTxt} · ${plural(n.tgtTables.size, 'target', 'targets')}`;
       case 'table': return [n.tech, roleOf(n), dagsTxt].filter(Boolean).join(' · ');
     }
-    return '';
+    return n.meta || ''; // BI Lineage nodes (reports, external sources) carry their own meta line
   }
 
   /* ================= Focus & history ================= */
@@ -1312,7 +1345,7 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
     if (n.kind === 'table') return [n.tech, roleOf(n)].filter(Boolean).join(' · ');
     if (n.kind === 'task') return `Task · ${n.dag}`;
     if (n.kind === 'script') return `Script · ${n.dags.size === 1 ? [...n.dags][0] : plural(n.dags.size, 'DAG', 'DAGs')}`;
-    return KIND_META[n.kind].label;
+    return n.meta || KIND_META[n.kind].label;
   }
 
   function colLabel(k, keys) {
@@ -1332,7 +1365,7 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
       $('#legend').innerHTML = legendHtml('');
       return;
     }
-    const lin = computeLineage();
+    const lin = biCanvasLineage(); // BI Lineage: the compact DAG · table · report view, else computeLineage()
     const L = layout(lin);
     lastLayout = L;
     const m = state.model;
@@ -1354,9 +1387,9 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
     let svg = `<svg width="${L.width}" height="${L.height}" aria-hidden="true"><defs>
       <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="arrow-fill"/></marker>
       <marker id="arrOn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" class="arrow-fill-on"/></marker></defs>`;
-    for (const [a, b] of lin.edges) {
+    for (const [a, b, cls] of lin.edges) {
       const d = edgePath(a, b);
-      if (d) svg += `<path class="edge" d="${d}" data-a="${esc(a)}" data-b="${esc(b)}" marker-end="url(#arr)"/>`;
+      if (d) svg += `<path class="edge${cls ? ' ' + cls : ''}" d="${d}" data-a="${esc(a)}" data-b="${esc(b)}" marker-end="url(#arr)"/>`;
     }
     svg += '</svg>';
 
@@ -1394,7 +1427,7 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
   }
 
   function legendHtml(note, lin) {
-    const items = ['dag', 'task', 'runner', 'script', 'table']
+    const items = (biCompact ? ['ext', 'dag', 'table', 'fabric', 'pbirs'] : ['dag', 'task', 'runner', 'script', 'table']) // BI Lineage compact view
       .map((k) => `<span class="legend-item"><span class="legend-ic" style="color:var(--k-${k})">${ICONS[k]}</span>${KIND_META[k].label}</span>`).join('');
     const size = lin ? `<span>${plural(lin.layer.size, 'node', 'nodes')} · ${plural(lin.edges.length, 'edge', 'edges')}</span>` : '';
     return `${items}<span aria-hidden="true">·</span>${size}${note ? `<span class="note">${esc(note)}</span>` : ''}`;
@@ -2091,7 +2124,7 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
   });
 
   // Upload: button, file picker, drag & drop anywhere
-  $('#uploadBtn').addEventListener('click', () => $('#fileInput').click());
+  $('#uploadBtn').addEventListener('click', () => { $('#loadMenu').hidePopover(); $('#fileInput').click(); });
   $('#fileInput').addEventListener('change', (e) => { const f = e.target.files?.[0]; if (f) loadFile(f); e.target.value = ''; });
   let dragDepth = 0;
   window.addEventListener('dragenter', (e) => { if ([...(e.dataTransfer?.types || [])].includes('Files')) { dragDepth++; $('#drop').hidden = false; } });
@@ -2306,22 +2339,162 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
       u.rows.push(r);
     }
     bi.links = { model: m, byNode, dag, unlinkedBi: [...biOnly.values()], unlinkedDag: dag.filter((d) => !d.uses.length) };
+    bi.links.compact = biCompactModel(m, dag);
     return bi.links;
+  }
+
+  /* ----- Compact canvas: DAG · table · report ----- */
+  // While BI data is loaded, Fabric / PBIRS reports (P|…) and one "external sources" group per DAG (X|…) are added
+  // to the DAG model as nodes, so search, focus, details and the canvas renderer handle them like any entity.
+  // Lokal reports are never drawn on the canvas.
+  let biCompact = false;
+  const BI_NODE_KINDS = new Set(['fabric', 'pbirs', 'ext']);
+  const BI_KIND_CHIP = ['report', 'Report', 'k-report'];
+  Object.assign(KIND_META, {
+    fabric: { label: 'Fabric report', plural: 'Fabric reports', cls: 'k-report' },
+    pbirs: { label: 'PBIRS report', plural: 'PBIRS reports', cls: 'k-report' },
+    ext: { label: 'External sources', plural: 'external source groups', cls: 'k-ext' },
+  });
+  Object.assign(KIND_ORDER, { fabric: 5, pbirs: 5, ext: 6 });
+  Object.assign(ICONS, {
+    report: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8.5 17v-3M12 17V9M15.5 17v-5"/></svg>',
+    // Power BI logo in outline (three rising bars); PBIRS adds a black "RS" on a Power BI yellow tile, readable in every theme
+    fabric: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="14" y="2.5" width="6.5" height="19" rx="1.6"/><rect x="8.5" y="7.5" width="6.5" height="14" rx="1.6"/><rect x="3" y="12.5" width="6.5" height="9" rx="1.6"/></svg>',
+    pbirs: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="11.5" y="1.5" width="5" height="15" rx="1.2"/><rect x="6.5" y="5.5" width="5" height="11" rx="1.2"/><rect x="1.5" y="9.5" width="5" height="7" rx="1.2"/><rect x="8" y="10.5" width="15.5" height="13" rx="2.5" fill="#f2c811" stroke-width="1" style="stroke:var(--bg-solid)"/><text x="15.75" y="21.2" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="800" fill="#000" stroke="none" textLength="12.5" lengthAdjust="spacingAndGlyphs">RS</text></svg>',
+    ext: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M4 9.3h16M4 14.7h16"/></svg>',
+  });
+
+  function biDropNodes(m) { for (const id of [...m.nodes.keys()]) if (id.startsWith('P|') || id.startsWith('X|')) m.nodes.delete(id); }
+
+  // Adds report and external-source nodes to the model; returns the compact graph as { out, inn }: id -> Map(other -> edge class).
+  function biCompactModel(m, dag) {
+    biDropNodes(m);
+    const out = new Map(), inn = new Map();
+    const link = (a, b, cls) => {
+      for (const [map, x, y] of [[out, a, b], [inn, b, a]]) {
+        if (!map.has(x)) map.set(x, new Map());
+        const e = map.get(x);
+        e.set(y, e.get(y) === '' ? '' : cls); // a plain link wins over an alias one
+      }
+    };
+    const mk = (id, kind, name, meta) => {
+      if (!m.nodes.has(id)) m.nodes.set(id, { id, kind, name, meta, rows: new Set(), dags: new Set(), techs: new Map(), owners: new Set(), tech: '',
+        isSource: false, isTarget: false, tasks: new Set(), runners: new Set(), scripts: new Set(), srcTables: new Set(), tgtTables: new Set() });
+      return m.nodes.get(id);
+    };
+    // DAG -> table it writes; table -> DAG that reads it when another DAG builds it; otherwise source -> the DAG's external group.
+    m.rows.forEach((r, i) => {
+      if (!r.dag) return;
+      const D = 'D|' + r.dag;
+      if (r.tgtId) link(D, r.tgtId, '');
+      if (!r.srcId) return;
+      if (m.nodes.get(r.srcId).isTarget) { link(r.srcId, D, ''); return; }
+      const x = mk('X|' + r.dag, 'ext', '', '');
+      (x.srcs ??= new Map()).set(r.source, r.sType);
+      x.dag = r.dag; x.dags.add(r.dag); x.rows.add(i);
+      if (r.owner) x.owners.add(r.owner);
+      link(x.id, D, '');
+    });
+    // Target table -> report (Fabric / PBIRS only); alias joins get a dashed edge.
+    for (const d of dag) {
+      for (const { r, aliased } of d.uses) {
+        if (r['Platform'] === 'Lokal') continue;
+        const p = mk(`P|${r['Platform']}|${r['Report ID']}`, r['Platform'] === 'Fabric' ? 'fabric' : 'pbirs', r['Report Name'], biWhere(r));
+        (p.uses ??= []).push({ d, u: { r, aliased } });
+        for (const i of m.nodes.get(d.id).rows) {
+          const row = m.rows[i];
+          if (row.tgtId !== d.id) continue;
+          p.rows.add(i); p.dags.add(row.dag);
+          if (row.owner) p.owners.add(row.owner);
+        }
+        link(d.id, p.id, aliased ? 'alias' : '');
+      }
+    }
+    for (const n of m.nodes.values()) {
+      if (!BI_NODE_KINDS.has(n.kind)) continue;
+      if (n.kind === 'ext') {
+        n.name = plural(n.srcs.size, 'external source', 'external sources');
+        n.meta = [...new Set(n.srcs.values())].filter(Boolean).join(' · ') || 'Type unknown';
+      }
+      n.lname = `${n.name} ${n.meta}`.toLowerCase();
+      n.lowners = [...n.owners].join(' ').toLowerCase();
+    }
+    return { out, inn };
+  }
+
+  // Same result shape as computeLineage, over the compact graph. A hop is DAG to DAG, as in the full view.
+  // Reports of placed tables (focus / downstream side) and the external group of placed DAGs are always shown.
+  function biCompactLineage(f, hops = state.depth) {
+    const { out, inn } = biLinks().compact, m = state.model;
+    let seeds = [f.id];
+    if (['task', 'runner', 'script'].includes(f.kind)) seeds = [...f.dags].map((d) => 'D|' + d);
+    else if (f.kind === 'table' && !f.isTarget) seeds = [...f.dags].map((d) => 'X|' + d).filter((id) => m.nodes.has(id)); // external table: its groups
+    if (!seeds.length) seeds = [f.id];
+    const maxSteps = hops >= 99 ? Infinity : hops * 2 - (m.nodes.get(seeds[0]).kind === 'dag' ? 1 : 0);
+    const layer = new Map(seeds.map((s) => [s, 0]));
+    let trimmed = false;
+    const place = (id, l) => {
+      if (layer.has(id)) return false;
+      if (layer.size >= MAX_NODES) { trimmed = true; return false; }
+      layer.set(id, l);
+      return true;
+    };
+    for (const [adj, sign] of [[inn, -1], [out, 1]]) {
+      let frontier = [...seeds];
+      for (let d = 1; frontier.length && d <= maxSteps; d++) {
+        const next = [];
+        for (const id of frontier) for (const o of adj.get(id)?.keys() || []) if (place(o, sign * d)) next.push(o);
+        frontier = next;
+      }
+    }
+    for (const [id, l] of [...layer]) {
+      const k = m.nodes.get(id).kind;
+      if (k === 'table' && l >= 0) for (const o of out.get(id)?.keys() || []) if (o.startsWith('P|')) place(o, l + 1);
+      if (k === 'dag') for (const o of inn.get(id)?.keys() || []) if (o.startsWith('X|')) place(o, l - 1);
+    }
+    const edges = [];
+    for (const a of layer.keys()) for (const [b, cls] of out.get(a) || []) if (layer.has(b)) edges.push([a, b, cls]);
+    return { layer, edges, seedSet: new Set(seeds), trimmed };
+  }
+
+  // The canvas' traversal. A report or external group can only be drawn in the compact view, so focusing one turns it on.
+  function biCanvasLineage() {
+    const f = state.model.nodes.get(state.focus);
+    if (bi && BI_NODE_KINDS.has(f.kind) && !biCompact) biSetCompact(true, false);
+    return bi && biCompact ? biCompactLineage(f) : computeLineage();
   }
   /* ===== /BI Lineage ===== */
 
   /* ===== BI Lineage: UI ===== */
   function biSet(next) {
-    if (next && !bi) [BI_DIRECT, BI_IMPACT].forEach((t) => state.openLists.add(t)); // open on first load
+    if (next && !bi) [BI_DIRECT, BI_IMPACT, 'Power BI tables', 'Fed by DAGs'].forEach((t) => state.openLists.add(t)); // open on first load
     bi = next;
     renderBiBanner();
     $('#tabBi').hidden = !bi;
     $('#biEmbedWrap').hidden = !bi;
+    $('#biViewSeg').hidden = !bi;
     $('#saveBuiltIn').hidden = !state.model || (state.origin === 'built-in' && !bi);
+    if (!bi) biSetCompact(false, false);
+    // "Report" entity-type chip exists only while BI data is loaded.
+    const at = FILTER_KINDS.indexOf(BI_KIND_CHIP);
+    if (bi && at < 0) { const all = state.kinds.size === FILTER_KINDS.length; FILTER_KINDS.push(BI_KIND_CHIP); if (all) state.kinds.add('report'); }
+    if (!bi && at >= 0) { FILTER_KINDS.splice(at, 1); state.kinds.delete('report'); if (!state.kinds.size) FILTER_KINDS.forEach(([k]) => state.kinds.add(k)); }
     if (!bi && state.tab === 'bi') setTab('graph');
     if (!state.model) return;
-    renderDetail();
+    if (bi) biLinks(); else biDropNodes(state.model);
+    if (state.model.nodes.has(state.focus)) renderAll(); else focus(pickDefaultFocus(), false);
+    renderResults();
     if (state.tab === 'bi') renderBiLinks();
+  }
+
+  function biSetCompact(on, render = true) {
+    biCompact = on;
+    document.querySelectorAll('#biViewSeg button').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.v === 'compact') === on)));
+    if (!render || !state.model) return;
+    const f = state.model.nodes.get(state.focus);
+    // The full view cannot draw reports or external groups: move the focus to what they hang off.
+    if (!on && f && BI_NODE_KINDS.has(f.kind)) { focus(f.kind === 'ext' ? 'D|' + f.dag : f.uses[0].d.id); return; }
+    renderGraph(true);
   }
 
   const biMark = (aliased) => aliased ? ' ≈' : ''; // ≈ = joined through a human-made alias (§7.2)
@@ -2359,6 +2532,18 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
   function biDetail(n) {
     if (!bi) return '';
     const m = state.model, L = biLinks();
+    if (n.kind === 'fabric' || n.kind === 'pbirs') {
+      const r0 = n.uses[0].u.r;
+      const fact = (k, v) => `<div class="fact wide"><dt>${k}</dt><dd>${esc(v)}</dd></div>`;
+      const items = n.uses.map(({ d, u }) => ({
+        name: u.r['Tabel di Power BI'] + biMark(u.aliased),
+        where: `${u.r['Mode Tabel']} · ${u.r['Jalur']}${u.r['Jalur'] === 'Via query' ? ` · via “${u.r['Query perantara']}” (depth ${u.r['Kedalaman']})` : ''}`,
+        text: '', table: m.nodes.get(d.id).name,
+      }));
+      return `<dl class="facts">${fact(r0['Platform'] === 'Fabric' ? 'Workspace' : 'Folder', r0['Lokasi'])}${fact('Report ID', r0['Report ID'])}</dl>`
+        + biList('Power BI tables', items) + refList('Fed by DAGs', new Set([...n.dags].map((x) => 'D|' + x)));
+    }
+    if (n.kind === 'ext') return textList('External sources', [...n.srcs].map(([text, type]) => ({ label: type || 'Type unknown', text })));
     let html = '';
     if (n.kind === 'table' && n.isTarget) {
       const d = L.dag.find((x) => x.id === n.id);
@@ -2406,14 +2591,14 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
   const biCount = (skipped) => [...skipped.values()].reduce((s, a) => s + a.length, 0);
 
   function renderBiBanner() {
-    const el = $('#biBanner');
-    el.hidden = !bi;
-    if (!bi) { el.innerHTML = ''; return; }
+    const el = $('#biBanner'), status = $('#biStatus');
+    status.hidden = !bi;
+    if (!bi) { if (el.matches(':popover-open')) el.hidePopover(); el.innerHTML = ''; return; }
     const days = Math.floor((Date.now() - Date.parse(bi.harvest)) / 864e5);
     const age = Number.isNaN(days) ? '' : days <= 0 ? ' · harvested today' : ` · ${plural(days, 'day', 'days')} old`;
     const skip = biCount(bi.skipped), aSkip = bi.alias ? biCount(bi.alias.skipped) : 0;
-    el.innerHTML = `<span class="dot" aria-hidden="true"></span>
-      <span>BI snapshot as of <strong>${esc(bi.harvest || 'unknown')}</strong>${age}</span>
+    $('#biStatusText').innerHTML = `BI · ${fmt(bi.rows.length)} rows${skip + aSkip ? ` · <span class="warn">${fmt(skip + aSkip)} skipped</span>` : ''}`;
+    el.innerHTML = `<span>BI snapshot as of <strong>${esc(bi.harvest || 'unknown')}</strong>${age}</span>
       <span>${esc(bi.name)}${bi.origin === 'embedded' ? ' (built into this file)' : ''} · ${plural(bi.rows.length, 'row', 'rows')} accepted${skip ? ` · <span class="warn">${fmt(skip)} skipped</span>` : ''}</span>
       <span>${bi.alias ? `Alias: ${esc(bi.alias.name)} · ${plural(bi.alias.rows.length, 'alias', 'aliases')}${aSkip ? ` · <span class="warn">${fmt(aSkip)} skipped</span>` : ''}` : 'No alias file'}</span>
       <span class="bi-actions">
@@ -2431,7 +2616,7 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
       biSet({ name: file.name, origin: 'file', ...r, alias: bi?.alias?.origin === 'file' ? bi.alias : null, links: null });
       if (state.model) biLinks();
       const skip = biCount(r.skipped);
-      toast(`Loaded ${file.name} · ${plural(r.rows.length, 'row', 'rows')} accepted${skip ? `, ${fmt(skip)} skipped (see the BI banner)` : ''} · ${Math.round(performance.now() - t0)} ms`);
+      toast(`Loaded ${file.name} · ${plural(r.rows.length, 'row', 'rows')} accepted${skip ? `, ${fmt(skip)} skipped (see the BI button in the header)` : ''} · ${Math.round(performance.now() - t0)} ms`);
     } catch (e) {
       toast(e.message || 'That BI file could not be read.', true);
     }
@@ -2461,7 +2646,8 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
   // YYYYMMDD of the latest Waktu Harvest, as written (the producer's own offset).
   const biFileDate = () => (/^(\d{4})-(\d{2})-(\d{2})/.exec(bi.harvest) || []).slice(1).join('') || new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
-  $('#biBtn').addEventListener('click', () => $('#biInput').click());
+  $('#biViewSeg').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (b) biSetCompact(b.dataset.v === 'compact'); });
+  $('#biBtn').addEventListener('click', () => { $('#loadMenu').hidePopover(); $('#biInput').click(); });
   $('#biInput').addEventListener('change', (e) => { const f = e.target.files?.[0]; if (f) biLoadFile(f); e.target.value = ''; });
   $('#biAliasInput').addEventListener('change', (e) => { const f = e.target.files?.[0]; if (f && bi) biLoadAlias(f); e.target.value = ''; });
   $('#biBanner').addEventListener('click', (e) => {
@@ -2481,7 +2667,7 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
     } else throw new Error('no data');
   } catch {
     $('#datasetName').textContent = 'No dataset';
-    $('#results').innerHTML = `<li class="empty"><h3>Load a lineage file</h3><p>Use “Load CSV / Excel” or drop a file with the Master Data DAG columns.</p></li>`;
+    $('#results').innerHTML = `<li class="empty"><h3>Load a lineage file</h3><p>Use “Load → ETL Lineage” or drop a file with the Master Data DAG columns.</p></li>`;
   }
   // BI Lineage: a snapshot built into this file loads through the same validation as a loaded file.
   if (typeof EMBEDDED_BI !== 'undefined' && EMBEDDED_BI) {

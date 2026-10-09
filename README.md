@@ -90,7 +90,7 @@ Kolom yang dipakai (nama kolom tidak harus persis sama, variasi yang mirip tetap
 
 ### Melihat data lain (hanya untuk Anda)
 
-Klik **Load CSV / Excel** (atau drag & drop file ke halaman) dan pilih file
+Klik **Load → ETL Lineage** (atau drag & drop file ke halaman) dan pilih file
 CSV/TXT/XLSX/XLS dengan kolom seperti di atas. File dibaca di browser Anda dan akan
 diingat saat aplikasi dibuka lagi. Klik **Use built-in** untuk kembali ke data bawaan.
 
@@ -101,7 +101,7 @@ diingat saat aplikasi dibuka lagi. Klik **Use built-in** untuk kembali ke data b
 
 Tidak perlu install apa pun, cukup browser:
 
-1. Buka file HTML, klik **Load CSV / Excel**, lalu pilih file data terbaru.
+1. Buka file HTML, klik **Load → ETL Lineage**, lalu pilih file data terbaru.
 2. Klik **Save as built-in** (muncul di sebelah nama dataset di bagian atas).
 3. Browser akan men-download file `dama_lineage_explorer.html` baru yang sudah
    berisi data terbaru. **Ganti file HTML lama dengan file ini**, lalu bagikan (atau
