@@ -2,8 +2,8 @@
 
 | Item | Nilai |
 |---|---|
-| Versi kontrak | `1.0.0` |
-| Status | Disepakati (dirilis 2026-10-08) |
+| Versi kontrak | `1.1.0` |
+| Status | Disepakati (dirilis 2026-10-08, diperbarui 2026-10-09) |
 | Produsen | TMDL Explorer (fitur **Batch Export**) |
 | Konsumen | DAG Lineage Explorer (fitur **Load BI Lineage CSV**) |
 | Lokasi dokumen | `docs/bi-lineage-contract.md` (salinan identik di kedua repo) |
@@ -313,9 +313,9 @@ Konsekuensinya, setiap run menghasilkan **Lineage CSV lengkap** (snapshot penuh)
 Memakai mekanisme **Save as built-in** yang sudah ada di DAG Explorer, diperluas dengan konstanta tambahan (mis. `EMBEDDED_BI`). Tanpa data BI, tombol menghasilkan file persis seperti sekarang.
 
 1. **Opt-in.** Saat menyimpan, pengguna memilih apakah snapshot BI (dan file alias) ikut ditanam. Default: **tidak ikut**.
-2. **Nama file bertanggal**, mis. `DAMA_ETL_Lineage_Explorer_YYYYMMDD.html`, agar HTML lama tidak tertimpa.
+2. **Nama file bertanggal**, mis. `dama_lineage_explorer_YYYYMMDD.html` (tanggal dari `Waktu Harvest` terbaru), agar HTML lama tidak tertimpa.
 3. **Alias ikut ditanam** bersama snapshot, karena join bergantung padanya.
-4. **Masking.** Untuk baris yang `Catatan`-nya mengandung `path pribadi`, kolom `Lokasi Sumber` dan `Objek Sumber` diganti `[disamarkan]` pada data yang ditanam. Kolom lain tidak berubah.
+4. **Tanpa masking.** Data ditanam apa adanya. Baris yang `Catatan`-nya mengandung `path pribadi` tetap membawa nilai asli `Lokasi Sumber` dan `Objek Sumber`. Konsekuensinya, HTML hasil embed bisa memuat path pribadi (mis. nama akun di `C:\Users\…`), jadi bagikan hanya ke penerima yang berhak.
 5. **Banner usia data.** Jika data BI berasal dari embed, tampilkan banner permanen *"Snapshot BI per [Waktu Harvest terbaru]"*.
 6. **Unload** pada data embed hanya menyembunyikannya selama sesi tab; data muncul lagi saat halaman dimuat ulang. Label tombol harus menjelaskan hal ini.
 7. Data BI yang dimuat dari file saat runtime menggantikan data embed selama sesi tersebut.
@@ -383,6 +383,7 @@ Pasangan di sisi DAG:
 | Versi | Tanggal | Perubahan |
 |---|---|---|
 | `1.0.0` | 2026-10-08 | Rilis pertama |
+| `1.1.0` | 2026-10-09 | §9.1: snapshot BI di-embed tanpa masking (`path pribadi` tetap nilai asli); contoh nama file embed menjadi `dama_lineage_explorer_YYYYMMDD.html` dengan tanggal dari `Waktu Harvest` terbaru. Format CSV tidak berubah |
 
 ---
 
