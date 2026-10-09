@@ -1,0 +1,3 @@
+﻿Kunci Asal,Kunci Tujuan,Jenis,Sisi,Catatan,Diubah Oleh,Tanggal
+dwh_demo.sap.vw_credit_limit_active,dwh_demo.sap.credit_limit_customer,View,BI,View: SELECT * FROM sap.credit_limit_customer WHERE is_active = 1,metadata.team,2026-10-08
+logistic.shipment_summary,dwh_demo.logistic.shipment_summary,Rename,Keduanya,Database dwh_demo dikonfirmasi tim logistik,metadata.team,2026-10-08
