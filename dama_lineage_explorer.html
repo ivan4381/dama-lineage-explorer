@@ -2217,8 +2217,10 @@ const EASTER_EGG = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW
     if (d !== '' && !/^\d+$/.test(d)) return ['Kedalaman is not a whole number ≥ 0', `“Kedalaman” is “${d}”`];
     const has = (c) => r[c] !== '';
     const j = r['Jalur'];
-    const fits = j === 'Langsung' ? !has('Query perantara') && d === '0' && BI_SRC.every(has)
-      : j === 'Via query' ? has('Query perantara') && Number(d) >= 1 && BI_SRC.every(has)
+    // 1.2.0: Objek Sumber may be empty when the location is the whole source (Status Kunci = Bukan tabel)
+    const src = () => BI_SRC.every((c) => has(c) || (c === 'Objek Sumber' && r['Status Kunci'] === 'Bukan tabel'));
+    const fits = j === 'Langsung' ? !has('Query perantara') && d === '0' && src()
+      : j === 'Via query' ? has('Query perantara') && Number(d) >= 1 && src()
       : j === 'Tanpa sumber eksternal' ? ![...BI_SRC, 'Query perantara', 'Kedalaman', 'Kunci Sumber'].some(has)
       : !has('Kunci Sumber') && has('Catatan'); // Tidak terbaca
     return fits ? null : ['Columns do not fit the Jalur rules (§5.3)', `“Jalur” is “${j}”`];

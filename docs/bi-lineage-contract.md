@@ -2,13 +2,13 @@
 
 | Item | Nilai |
 |---|---|
-| Versi kontrak | `1.1.0` |
+| Versi kontrak | `1.2.0` |
 | Status | Disepakati (dirilis 2026-10-08, diperbarui 2026-10-09) |
-| Produsen | TMDL Explorer (fitur **Batch Export**) |
+| Produsen | SEMADEX — Semantic Model Definition Explorer, sebelumnya TMDL Explorer (fitur **Batch Export**) |
 | Konsumen | DAG Lineage Explorer (fitur **Load BI Lineage CSV**) |
 | Lokasi dokumen | `docs/bi-lineage-contract.md` (salinan identik di kedua repo) |
 
-> Analogi singkat: dokumen ini adalah **standar colokan**. TMDL Explorer membuat "steker", DAG Explorer menyediakan "stopkontak". Selama keduanya patuh pada standar ini, kedua repo boleh berkembang sendiri-sendiri tanpa saling mengubah kode.
+> Analogi singkat: dokumen ini adalah **standar colokan**. SEMADEX membuat "steker", DAG Explorer menyediakan "stopkontak". Selama keduanya patuh pada standar ini, kedua repo boleh berkembang sendiri-sendiri tanpa saling mengubah kode.
 
 ---
 
@@ -33,9 +33,9 @@ Menyambungkan lineage Airflow DAG (tabel target di DWH/BigQuery/Hive) dengan lin
 
 | File | Format | Dibuat oleh | Dibaca oleh | Wajib |
 |---|---|---|---|---|
-| `bi_lineage_<YYYYMMDD-HHmm>.csv` | CSV | TMDL Explorer | DAG Explorer, TMDL Explorer (run berikutnya) | Ya |
-| `bi_lineage_manifest.json` | JSON | TMDL Explorer | TMDL Explorer (run berikutnya) | Ya, untuk incremental |
-| `bi_lineage_log_<YYYYMMDD-HHmm>.csv` | CSV | TMDL Explorer | Manusia | Ya |
+| `bi_lineage_<YYYYMMDD-HHmm>.csv` | CSV | SEMADEX | DAG Explorer, SEMADEX (run berikutnya) | Ya |
+| `bi_lineage_manifest.json` | JSON | SEMADEX | SEMADEX (run berikutnya) | Ya, untuk incremental |
+| `bi_lineage_log_<YYYYMMDD-HHmm>.csv` | CSV | SEMADEX | Manusia | Ya |
 | `bi_lineage_alias.csv` | CSV | Diisi manual oleh tim | DAG Explorer | Opsional |
 
 ## 4. Konvensi umum semua file CSV
@@ -76,13 +76,13 @@ Jika satu tabel model membaca 3 sumber, hasilnya 3 baris. Jika satu sumber dicap
 | 6 | `Versi Sumber` | Ya | teks | Nilai yang dipakai manifest untuk incremental (lihat §8.3) |
 | 7 | `Tabel di Power BI` | Ya | teks | **Tabel model akhir** (yang muncul di Model view), bukan query staging |
 | 8 | `Mode Tabel` | Ya | `import` \| `directQuery` \| `dual` \| `calculated` \| `calcGroup` \| `lainnya` | Diambil dari `Kind` parser |
-| 9 | `Query perantara` | Kondisional | teks | Query yang **langsung memanggil connector**; query di antara tabel model dan query ini tidak dicatat (rantai lengkap bisa ditelusuri lewat `reach()` di TMDL Explorer). Kosong jika `Jalur` = `Langsung` |
+| 9 | `Query perantara` | Kondisional | teks | Query yang **langsung memanggil connector**; query di antara tabel model dan query ini tidak dicatat (rantai lengkap bisa ditelusuri lewat `reach()` di SEMADEX). Kosong jika `Jalur` = `Langsung` |
 | 10 | `Kedalaman` | Kondisional | bilangan bulat ≥ 0 | Jumlah lompatan dari tabel model ke query yang memanggil connector. `0` = tabel itu sendiri yang memanggil connector |
 | 11 | `Jalur` | Ya | `Langsung` \| `Via query` \| `Tanpa sumber eksternal` \| `Tidak terbaca` | Lihat §5.3 |
 | 12 | `Connector` | Kondisional | teks | Nama connector mentah dari parser (mis. `BigQuery`, `SQL Server`, `SharePoint`, `Folder`, `File`, `Web`) |
 | 13 | `Source Type` | Kondisional | lihat §5.4 | Kosakata yang **sama** dengan kolom `Source Type` di Lineage DAG CSV |
 | 14 | `Lokasi Sumber` | Kondisional | teks | Server/host, project BigQuery, URL site SharePoint, atau **full path** UNC untuk file/folder jaringan |
-| 15 | `Objek Sumber` | Kondisional | teks | Nama objek **apa adanya** dari M/SQL (sebelum normalisasi). Untuk file: nama file atau pola filter |
+| 15 | `Objek Sumber` | Kondisional | teks | Nama objek **apa adanya** dari M/SQL (sebelum normalisasi). Untuk file: nama file atau pola filter. Boleh kosong jika `Status Kunci` = `Bukan tabel` dan lokasinya sudah menunjuk seluruh sumber (lihat §5.3) |
 | 16 | `Kunci Sumber` | Kondisional | teks lowercase | Kunci penyambung hasil normalisasi (lihat §6). Kosong jika bukan tabel database |
 | 17 | `Status Kunci` | Ya | `Lengkap` \| `Dilengkapi dari koneksi` \| `Tidak lengkap` \| `Bukan tabel` | Kualitas `Kunci Sumber` |
 | 18 | `Dari Native SQL` | Ya | `Ya` \| `Tidak` | `Ya` jika objek diambil dari teks SQL di `Value.NativeQuery` / opsi `Query=` |
@@ -94,10 +94,12 @@ Jika satu tabel model membaca 3 sumber, hasilnya 3 baris. Jika satu sumber dicap
 
 | `Jalur` | `Query perantara` | `Kedalaman` | `Connector` / `Source Type` / `Lokasi Sumber` / `Objek Sumber` | `Kunci Sumber` | `Catatan` |
 |---|---|---|---|---|---|
-| `Langsung` | kosong | `0` | terisi | terisi jika tabel database | opsional |
-| `Via query` | terisi | ≥ `1` | terisi | terisi jika tabel database | opsional |
+| `Langsung` | kosong | `0` | terisi¹ | terisi jika tabel database | opsional |
+| `Via query` | terisi | ≥ `1` | terisi¹ | terisi jika tabel database | opsional |
 | `Tanpa sumber eksternal` | kosong | kosong | kosong | kosong | opsional (mis. `Enter Data`, `DAX calculated`) |
 | `Tidak terbaca` | boleh terisi | boleh terisi | boleh terisi sebagian | kosong | **wajib** berisi alasan |
+
+¹ Sejak `1.2.0`: `Objek Sumber` boleh kosong jika `Status Kunci` = `Bukan tabel`, karena `Lokasi Sumber` sudah menunjuk seluruh sumber dan tidak ada objek yang lebih spesifik di M. Contoh: `Web.Contents(url)`, `Folder.Files(path)` atau ADLS tanpa filter nama file, SharePoint list. `Connector`, `Source Type` dan `Lokasi Sumber` tetap wajib terisi.
 
 Contoh `Tanpa sumber eksternal`: tabel `Calendar` (DAX), `Measures Table` (Enter Data / `Binary.Decompress`), calculation group.
 
@@ -214,7 +216,7 @@ Analogi: manifest adalah **buku tamu**. Setiap report yang sudah "berkunjung" di
 {
   "contractVersion": "1.0.0",
   "generatedAt": "2026-10-08T14:05:00+07:00",
-  "tool": { "name": "TMDL Explorer", "version": "x.y.z" },
+  "tool": { "name": "SEMADEX", "version": "x.y.z" },
   "sources": [
     { "platform": "Fabric", "scope": "<workspace id>" },
     { "platform": "PBIRS",  "scope": "/Subholding/Finance" },
@@ -384,6 +386,7 @@ Pasangan di sisi DAG:
 |---|---|---|
 | `1.0.0` | 2026-10-08 | Rilis pertama |
 | `1.1.0` | 2026-10-09 | §9.1: snapshot BI di-embed tanpa masking (`path pribadi` tetap nilai asli); contoh nama file embed menjadi `dama_lineage_explorer_YYYYMMDD.html` dengan tanggal dari `Waktu Harvest` terbaru. Format CSV tidak berubah |
+| `1.2.0` | 2026-10-09 | §5.2, §5.3: `Objek Sumber` boleh kosong pada `Jalur` = `Langsung` / `Via query` jika `Status Kunci` = `Bukan tabel` (sumber Web, Folder, ADLS, SharePoint list yang lokasinya sudah menunjuk seluruh sumber). Sebelumnya baris seperti ini dilewati konsumen. Header dan arti kolom tidak berubah; baris `1.0.0`/`1.1.0` tetap valid. Produsen berganti nama dari TMDL Explorer menjadi SEMADEX (juga `tool.name` di manifest) |
 
 ---
 
