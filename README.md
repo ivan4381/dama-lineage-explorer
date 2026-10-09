@@ -1,10 +1,10 @@
 # DAMA ETL Lineage Explorer
 
 Aplikasi untuk menelusuri alur data (lineage) Airflow: **DAG → task → script → tabel**.
-Semuanya ada dalam satu file HTML — cukup buka `DAMA_ETL_Lineage_Explorer.html` di
+Semuanya ada dalam satu file HTML — cukup buka `dama_lineage_explorer.html` di
 browser (Chrome/Edge). Tidak perlu server, tidak perlu install apa pun.
 
-**[Buka aplikasi](./DAMA_ETL_Lineage_Explorer.html)** (atau klik dua kali file-nya di komputer Anda).
+**[Buka aplikasi](./dama_lineage_explorer.html)** (atau klik dua kali file-nya di komputer Anda).
 
 ## Fitur
 
@@ -103,7 +103,7 @@ Tidak perlu install apa pun, cukup browser:
 
 1. Buka file HTML, klik **Load CSV / Excel**, lalu pilih file data terbaru.
 2. Klik **Save as built-in** (muncul di sebelah nama dataset di bagian atas).
-3. Browser akan men-download file `DAMA_ETL_Lineage_Explorer.html` baru yang sudah
+3. Browser akan men-download file `dama_lineage_explorer.html` baru yang sudah
    berisi data terbaru. **Ganti file HTML lama dengan file ini**, lalu bagikan (atau
    commit ke git).
 
@@ -119,7 +119,7 @@ yang sama dengan aplikasi, karena kolom deskripsi berisi koma di dalam tanda kut
 ```js
 node -e "
 const fs = require('fs');
-const CSV = 'Lineage DAG PPN.csv', HTML = 'DAMA_ETL_Lineage_Explorer.html';
+const CSV = 'Lineage DAG PPN.csv', HTML = 'dama_lineage_explorer.html';
 let html = fs.readFileSync(HTML, 'utf8');
 const src = html.slice(html.indexOf('function parseCSV('), html.indexOf('function parseWorkbook('));
 const parseCSV = new Function(src + '; return parseCSV;')();
