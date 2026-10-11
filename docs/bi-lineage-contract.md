@@ -4,11 +4,11 @@
 |---|---|
 | Versi kontrak | `1.2.0` |
 | Status | Disepakati (dirilis 2026-10-08, diperbarui 2026-10-09) |
-| Produsen | SEMADEX — Semantic Model Definition Explorer, sebelumnya TMDL Explorer (fitur **Batch Export**) |
+| Produsen | SIDIK — Semantic Info & Dependency Inspection Kit, sebelumnya SEMADEX / TMDL Explorer (fitur **Batch Export**) |
 | Konsumen | DAG Lineage Explorer (fitur **Load BI Lineage CSV**) |
 | Lokasi dokumen | `docs/bi-lineage-contract.md` (salinan identik di kedua repo) |
 
-> Analogi singkat: dokumen ini adalah **standar colokan**. SEMADEX membuat "steker", DAG Explorer menyediakan "stopkontak". Selama keduanya patuh pada standar ini, kedua repo boleh berkembang sendiri-sendiri tanpa saling mengubah kode.
+> Analogi singkat: dokumen ini adalah **standar colokan**. SIDIK membuat "steker", DAG Explorer menyediakan "stopkontak". Selama keduanya patuh pada standar ini, kedua repo boleh berkembang sendiri-sendiri tanpa saling mengubah kode.
 
 ---
 
@@ -33,9 +33,9 @@ Menyambungkan lineage Airflow DAG (tabel target di DWH/BigQuery/Hive) dengan lin
 
 | File | Format | Dibuat oleh | Dibaca oleh | Wajib |
 |---|---|---|---|---|
-| `bi_lineage_<YYYYMMDD-HHmm>.csv` | CSV | SEMADEX | DAG Explorer, SEMADEX (run berikutnya) | Ya |
-| `bi_lineage_manifest.json` | JSON | SEMADEX | SEMADEX (run berikutnya) | Ya, untuk incremental |
-| `bi_lineage_log_<YYYYMMDD-HHmm>.csv` | CSV | SEMADEX | Manusia | Ya |
+| `bi_lineage_<YYYYMMDD-HHmm>.csv` | CSV | SIDIK | DAG Explorer, SIDIK (run berikutnya) | Ya |
+| `bi_lineage_manifest.json` | JSON | SIDIK | SIDIK (run berikutnya) | Ya, untuk incremental |
+| `bi_lineage_log_<YYYYMMDD-HHmm>.csv` | CSV | SIDIK | Manusia | Ya |
 | `bi_lineage_alias.csv` | CSV | Diisi manual oleh tim | DAG Explorer | Opsional |
 
 ## 4. Konvensi umum semua file CSV
@@ -76,7 +76,7 @@ Jika satu tabel model membaca 3 sumber, hasilnya 3 baris. Jika satu sumber dicap
 | 6 | `Versi Sumber` | Ya | teks | Nilai yang dipakai manifest untuk incremental (lihat §8.3) |
 | 7 | `Tabel di Power BI` | Ya | teks | **Tabel model akhir** (yang muncul di Model view), bukan query staging |
 | 8 | `Mode Tabel` | Ya | `import` \| `directQuery` \| `dual` \| `calculated` \| `calcGroup` \| `lainnya` | Diambil dari `Kind` parser |
-| 9 | `Query perantara` | Kondisional | teks | Query yang **langsung memanggil connector**; query di antara tabel model dan query ini tidak dicatat (rantai lengkap bisa ditelusuri lewat `reach()` di SEMADEX). Kosong jika `Jalur` = `Langsung` |
+| 9 | `Query perantara` | Kondisional | teks | Query yang **langsung memanggil connector**; query di antara tabel model dan query ini tidak dicatat (rantai lengkap bisa ditelusuri lewat `reach()` di SIDIK). Kosong jika `Jalur` = `Langsung` |
 | 10 | `Kedalaman` | Kondisional | bilangan bulat ≥ 0 | Jumlah lompatan dari tabel model ke query yang memanggil connector. `0` = tabel itu sendiri yang memanggil connector |
 | 11 | `Jalur` | Ya | `Langsung` \| `Via query` \| `Tanpa sumber eksternal` \| `Tidak terbaca` | Lihat §5.3 |
 | 12 | `Connector` | Kondisional | teks | Nama connector mentah dari parser (mis. `BigQuery`, `SQL Server`, `SharePoint`, `Folder`, `File`, `Web`) |
@@ -216,7 +216,7 @@ Analogi: manifest adalah **buku tamu**. Setiap report yang sudah "berkunjung" di
 {
   "contractVersion": "1.0.0",
   "generatedAt": "2026-10-08T14:05:00+07:00",
-  "tool": { "name": "SEMADEX", "version": "x.y.z" },
+  "tool": { "name": "SIDIK", "version": "x.y.z" },
   "sources": [
     { "platform": "Fabric", "scope": "<workspace id>" },
     { "platform": "PBIRS",  "scope": "/Subholding/Finance" },
